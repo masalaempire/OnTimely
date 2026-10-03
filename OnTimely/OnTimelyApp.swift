@@ -16,7 +16,7 @@ struct OnTimelyApp: App {
     var body: some Scene {
         Window("OnTimely", id: "main") {
             if let container = runtime.container {
-                MainView()
+                AppLaunchView(updates: updates)
                     .environment(runtime)
                     .modelContainer(container)
             } else {
@@ -27,6 +27,7 @@ struct OnTimelyApp: App {
                 }
                 .padding(40)
                 .frame(width: 540)
+                .onAppear { updates.start() }
             }
         }
         .defaultSize(width: 1000, height: 680)

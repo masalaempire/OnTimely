@@ -13,13 +13,7 @@ struct SettingsView: View {
                 PageHeading(title: "Settings", subtitle: "A little room around your deadlines.")
                 VStack(alignment: .leading, spacing: 16) {
                     Text("New task defaults").font(.system(size: 15, weight: .semibold)).accessibilityAddTraits(.isHeader)
-                    Picker("Repeat reminders every", selection: $interval) {
-                        ForEach([5, 10, 15, 30, 60], id: \.self) { Text("\($0) minutes").tag($0) }
-                    }
-                    Stepper("Safety buffer: \(buffer) minutes", value: $buffer, in: 0...180, step: 5)
-                    Picker("Submission reminders before due", selection: $lead) {
-                        ForEach([5, 15, 30, 60], id: \.self) { Text("\($0) minutes").tag($0) }
-                    }
+                    ReminderDefaultsFields(interval: $interval, buffer: $buffer, lead: $lead)
                     Text("Defaults apply to newly planned tasks. Adjust reminders on a task’s review to change its plan.")
                         .font(TaskStyle.metadata).foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

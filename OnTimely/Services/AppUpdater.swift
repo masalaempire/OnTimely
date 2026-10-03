@@ -10,12 +10,14 @@ final class AppUpdater: ObservableObject {
     private let controller: SPUStandardUpdaterController
 
     init() {
-        controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+        controller = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
         controller.updater.publisher(for: \.canCheckForUpdates).assign(to: &$canCheckForUpdates)
         controller.updater.publisher(for: \.automaticallyChecksForUpdates).assign(to: &$automaticallyChecksForUpdates)
         controller.updater.publisher(for: \.automaticallyDownloadsUpdates).assign(to: &$automaticallyInstallsUpdates)
     }
 
+    // First-launch setup chooses update preferences before Sparkle schedules a check.
+    func start() { controller.startUpdater() }
     func checkForUpdates() { controller.checkForUpdates(nil) }
     func setAutomaticChecks(_ enabled: Bool) { controller.updater.automaticallyChecksForUpdates = enabled }
     func setAutomaticInstallation(_ enabled: Bool) { controller.updater.automaticallyDownloadsUpdates = enabled }
