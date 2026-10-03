@@ -1,9 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
     <channel>
-        <title>OnTimely Updates</title>
-        <link>https://github.com/masalaempire/OnTimely</link>
-        <description>Updates for OnTimely on macOS.</description>
-        <language>en</language>
+        <title>OnTimely</title>
+        <item>
+            <title>0.1.0</title>
+            <pubDate>Sun, 04 Oct 2026 00:59:39 +0800</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/masalaempire/OnTimely/releases/download/v0.1.0/OnTimely.dmg" length="9829913" type="application/octet-stream" sparkle:edSignature="0Qo8cGR6tIzO3c6REjQKhEZgLisAXVVZas945jj97a+noUq+p0xw1wiQ6I0c+xL+zrUURGXHhrd8rp6VlCc3Cg=="/>
+        </item>
     </channel>
 </rss>
