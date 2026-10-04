@@ -3,6 +3,15 @@
     <channel>
         <title>OnTimely</title>
         <item>
+            <title>0.2.2</title>
+            <pubDate>Mon, 05 Oct 2026 00:34:05 +0800</pubDate>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>0.2.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/masalaempire/OnTimely/releases/download/v0.2.2/OnTimely.dmg" length="10231141" type="application/octet-stream" sparkle:edSignature="LiyUweMNLrAzq9q0V+UooNsgm0+DUQNEpI/mAhB197AvTNzXwy7KUdgKx7TKH/FCtMKkpFXgkrO2aXcuu4pgBA=="/>
+        </item>
+        <item>
             <title>0.2.1</title>
             <pubDate>Sun, 04 Oct 2026 23:25:57 +0800</pubDate>
             <sparkle:version>5</sparkle:version>
@@ -19,15 +28,6 @@
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <enclosure url="https://github.com/masalaempire/OnTimely/releases/download/v0.2.0/OnTimely.dmg" length="9248101" type="application/octet-stream" sparkle:edSignature="FdH7jqkoMTWEgyPpmS5WgPy2t1V7gJqI7GgLwPWvMTeOwrq9jHAZWP0mbKwJo3B13PG7GH4f5IZZayk0nfYQDA=="/>
-        </item>
-        <item>
-            <title>0.1.2</title>
-            <pubDate>Sun, 04 Oct 2026 11:42:59 +0800</pubDate>
-            <sparkle:version>3</sparkle:version>
-            <sparkle:shortVersionString>0.1.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/masalaempire/OnTimely/releases/download/v0.1.2/OnTimely.dmg" length="7544165" type="application/octet-stream" sparkle:edSignature="DdCs8E6MO4FLdIUCAcEsN49V0Niz/5cPFBqMsPTgOtk5+2VfRQpUAwbe50+HNRwZhCOMQ8zXSBXpaVfGKegQDQ=="/>
         </item>
         <item>
             <title>0.1.1</title>

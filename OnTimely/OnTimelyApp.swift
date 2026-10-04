@@ -34,6 +34,7 @@ struct OnTimelyApp: App {
         .windowResizability(.contentMinSize)
         .commands {
             AboutCommands()
+            HelpCommands(runtime: runtime)
             CommandGroup(after: .appInfo) { CheckForUpdatesButton(updates: updates) }
             CommandGroup(replacing: .newItem) {
                 Button(runtime.section == .notes ? "New Note" : "Add Task") {

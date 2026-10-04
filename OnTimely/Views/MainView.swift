@@ -18,7 +18,7 @@ struct MainView: View {
                 Text("OnTimely").font(.system(size: 20, weight: .semibold))
                     .padding(.horizontal, 12)
                 VStack(spacing: 4) {
-                    ForEach(AppSection.allCases) { section in
+                    ForEach(AppSection.allCases.filter { $0 != .help }) { section in
                         SidebarSectionButton(section: section,
                                              count: count(in: section),
                                              selected: runtime.section == section) {
@@ -27,13 +27,22 @@ struct MainView: View {
                     }
                 }
                 Spacer(minLength: 24)
-                SettingsLink {
-                    Label("Settings", systemImage: "gearshape")
-                        .font(.system(size: 13)).frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(12)
+                VStack(spacing: 4) {
+                    SidebarSectionButton(section: .help, count: 0, selected: runtime.section == .help) {
+                        runtime.showHelp()
+                    }
+                    .help("Help (⌘⇧/)")
+                    SettingsLink {
+                        HStack(spacing: 12) {
+                            Image(systemName: "gearshape").frame(width: 20)
+                            Text("Settings")
+                            Spacer(minLength: 8)
+                        }
+                        .font(.system(size: 13)).padding(12)
+                    }
+                    .buttonStyle(.plain).foregroundStyle(.secondary)
+                    .help("Settings (⌘,)")
                 }
-                .buttonStyle(.plain).foregroundStyle(.secondary)
-                .help("Settings (⌘,)")
             }
             .padding(.horizontal, 12).padding(.top, 16).padding(.bottom, 12)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -55,6 +64,8 @@ struct MainView: View {
                 NotesView()
             case .done:
                 DoneView(tasks: tasks.filter { $0.status == .completed }, onRename: { renamingTask = $0 })
+            case .help:
+                HelpView()
             }
         }
         .tint(TaskStyle.coral)
@@ -88,6 +99,7 @@ struct MainView: View {
         case .calendar: tasks.filter { CalendarTaskSchedule(task: $0) != nil }.count
         case .notes: notes.count
         case .done: tasks.filter { $0.status == .completed }.count
+        case .help: 0
         }
     }
 }
@@ -107,15 +119,15 @@ private struct SidebarSectionButton: View {
                 Spacer(minLength: 8)
                 if count > 0 { Text("\(count)").font(TaskStyle.metadata).foregroundStyle(.secondary).monospacedDigit() }
             }
-            .font(.system(size: 14, weight: selected ? .medium : .regular))
+            .font(.system(size: section == .help ? 13 : 14, weight: selected ? .medium : .regular))
             .padding(12)
-            .foregroundStyle(selected ? TaskStyle.coral : TaskStyle.text)
+            .foregroundStyle(selected ? TaskStyle.coral : section == .help ? Color.secondary : TaskStyle.text)
             .background(selected ? TaskStyle.selection : hovering ? TaskStyle.hover : Color.clear,
                         in: RoundedRectangle(cornerRadius: 6))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain).onHover { hovering = $0 }
-        .accessibilityLabel("\(section.rawValue), \(count) \(section == .notes ? "notes" : "tasks")")
+        .accessibilityLabel(section == .help ? "Help" : "\(section.rawValue), \(count) \(section == .notes ? "notes" : "tasks")")
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 }

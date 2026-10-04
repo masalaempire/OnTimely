@@ -5,6 +5,7 @@ import SwiftData
 
 enum AppSection: String, CaseIterable, Identifiable {
     case inbox = "Inbox", active = "Active", calendar = "Calendar", notes = "Notes", done = "Done"
+    case help = "Help"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -13,6 +14,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .calendar: "calendar"
         case .notes: "note.text"
         case .done: "checkmark"
+        case .help: "questionmark.circle"
         }
     }
 }
@@ -190,6 +192,13 @@ final class AppRuntime {
         section = .notes
         newNoteRequest = UUID()
         NotificationCenter.default.post(name: .showMainWindow, object: nil)
+    }
+
+    func showHelp() {
+        section = .help
+        openMainWindow?()
+        NotificationCenter.default.post(name: .showMainWindow, object: nil)
+        NSApplication.shared.activate(ignoringOtherApps: true)
     }
 
     func requestCalendarImport(link: String = "") {
