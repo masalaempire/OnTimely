@@ -38,6 +38,7 @@ final class AppRuntime {
     let container: ModelContainer?
     let store: TaskStore?
     let noteStore: NoteStore?
+    let calendarImports: CalendarImportService?
     let startupError: String?
     let notifications: NotificationManager
     var section: AppSection = .inbox
@@ -48,6 +49,7 @@ final class AppRuntime {
     var newNoteRequest: UUID?
 
     @ObservationIgnored private var timer: Timer?
+    @ObservationIgnored private var calendarTimer: Timer?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
     @ObservationIgnored private var activity: NSObjectProtocol?
     @ObservationIgnored private var refreshing = false
@@ -57,20 +59,24 @@ final class AppRuntime {
 
     init() {
         do {
-            let container = try ModelContainer(for: TaskItem.self, NoteItem.self)
+            let container = try AppPersistence.makeContainer()
             self.container = container
-            store = TaskStore(context: container.mainContext)
+            let taskStore = TaskStore(context: container.mainContext)
+            store = taskStore
             noteStore = NoteStore(context: container.mainContext)
+            calendarImports = CalendarImportService(store: taskStore)
             startupError = nil
         } catch {
             container = nil
             store = nil
             noteStore = nil
+            calendarImports = nil
             startupError = error.localizedDescription
         }
         notifications = NotificationManager()
         notifications.onAction = { [weak self] payload in await self?.handle(payload) }
         notifications.shouldPresent = { [weak self] payload in self?.isValid(payload, foreground: true) ?? false }
+        calendarImports?.onTasksChanged = { [weak self] in await self?.refresh() }
     }
 
     func start() {
@@ -79,18 +85,30 @@ final class AppRuntime {
         // The lightweight app keeps refilling its notification queue when its window is closed.
         activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiatedAllowingIdleSystemSleep], reason: "Keep deadline reminders scheduled")
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            Task { @MainActor in await self?.refresh() }
+            Task { @MainActor [weak self] in await self?.refresh() }
+        }
+        calendarTimer = Timer.scheduledTimer(withTimeInterval: 15 * 60, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in await self?.calendarImports?.refreshSubscriptions() }
         }
         observers.append(NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in await self?.refresh() }
+            Task { @MainActor [weak self] in
+                await self?.refresh()
+                await self?.calendarImports?.refreshSubscriptions()
+            }
         })
         observers.append(NotificationCenter.default.addObserver(forName: .NSSystemClockDidChange, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in await self?.refresh() }
+            Task { @MainActor [weak self] in await self?.refresh() }
         })
         observers.append(NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
-            Task { @MainActor in await self?.refresh() }
+            Task { @MainActor [weak self] in
+                await self?.refresh()
+                await self?.calendarImports?.refreshSubscriptions()
+            }
         })
-        Task { await refresh() }
+        Task { @MainActor [weak self] in
+            await self?.refresh()
+            await self?.calendarImports?.refreshSubscriptions()
+        }
     }
 
     func refresh() async {

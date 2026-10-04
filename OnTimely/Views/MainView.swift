@@ -60,7 +60,10 @@ struct MainView: View {
         .tint(TaskStyle.coral)
         .environment(\.showsNotificationNotice, tasks.contains { $0.status == .active })
         .frame(minWidth: 720, minHeight: 420)
-        .sheet(item: $planningTask) { task in TaskPlanningView(task: task) }
+        .sheet(item: $planningTask) { task in
+            if task.isCalendarTask { ImportedTaskPlanningView(task: task) }
+            else { TaskPlanningView(task: task) }
+        }
         .sheet(item: $renamingTask) { task in RenameTaskView(task: task) }
         .alert("OnTimely", isPresented: Binding(get: { runtime.errorMessage != nil }, set: { if !$0 { runtime.errorMessage = nil } })) {
             Button("OK") { runtime.errorMessage = nil }

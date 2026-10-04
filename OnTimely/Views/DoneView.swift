@@ -28,6 +28,7 @@ private struct DoneTaskRow: View {
     let task: TaskItem
     let onRename: (TaskItem) -> Void
     @State private var detailsExpanded = false
+    @State private var confirmingDelete = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -51,12 +52,13 @@ private struct DoneTaskRow: View {
             TaskOverflowMenu(title: task.title) { actions }
         }
         .taskRowSurface().contextMenu { actions }
+        .confirmTaskDeletion(task, isPresented: $confirmingDelete)
     }
 
     @ViewBuilder private var actions: some View {
         Button("Reopen in Inbox") { runtime.perform { try $0.moveToInbox(task) } }
         Button("Rename") { onRename(task) }
         Divider()
-        Button("Delete", role: .destructive) { runtime.perform { try $0.delete(task) } }
+        Button("Delete", role: .destructive) { confirmingDelete = true }
     }
 }

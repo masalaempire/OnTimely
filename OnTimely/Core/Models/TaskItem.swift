@@ -30,6 +30,15 @@ final class TaskItem {
     /// Old notification actions cannot mutate a newly edited plan.
     var reminderRevision: UUID
 
+    // Optional metadata lets existing local tasks migrate without losing their plans.
+    var calendarFeedFingerprint: String?
+    var calendarEventID: String?
+    var calendarSourceTitle: String?
+    var calendarSourceDueDate: Date?
+    var calendarReminderOverrides: Bool = false
+    var calendarDeadlineOverridden: Bool = false
+    var calendarIsCancelled: Bool = false
+
     init(title: String, createdAt: Date = .now) {
         id = UUID()
         self.title = title
@@ -54,6 +63,15 @@ final class TaskItem {
         return latestSafeStartOverride ?? DeadlineCalculator.latestSafeStart(
             dueDate: dueDate, estimatedDuration: estimatedDuration, safetyBuffer: safetyBuffer
         )
+    }
+
+    var isCalendarTask: Bool { calendarEventID != nil }
+
+    var latestStartLabel: String { isCalendarTask ? "Latest start" : "Latest safe start" }
+
+    var calendarPlanNeedsReview: Bool {
+        guard isCalendarTask, let dueDate, let suggestedStartDate, let latest = latestSafeStartDate else { return false }
+        return suggestedStartDate >= dueDate || latest >= dueDate || suggestedStartDate > latest
     }
 
     var snapshot: TaskSnapshot {

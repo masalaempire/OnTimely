@@ -25,9 +25,9 @@ struct TaskPlan: Equatable, Sendable {
         )
     }
 
-    func validationMessage(at now: Date) -> String? {
+    func validationMessage(at now: Date, allowOverdue: Bool = false) -> String? {
         if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return "Give the task a name." }
-        if dueDate <= now { return "Choose a due time in the future." }
+        if !allowOverdue && dueDate <= now { return "Choose a due time in the future." }
         if !(1...10_080).contains(estimatedMinutes) { return "Estimated work must be between 1 minute and 7 days." }
         if !(0...10_080).contains(safetyBufferMinutes) { return "The safety buffer must be between 0 minutes and 7 days." }
         if !(1...1_440).contains(submissionLeadMinutes) { return "Submission reminders must begin 1 minute to 24 hours before due." }

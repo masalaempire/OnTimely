@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 private enum TaskCalendarMode: String, CaseIterable, Identifiable {
@@ -20,13 +21,21 @@ struct TaskCalendarView: View {
     @State private var mode: TaskCalendarMode = .month
     @State private var focusedDate = Date.now
     @State private var creationRequest: CalendarTaskCreationRequest?
+    @State private var importPresented = false
 
     private var schedules: [CalendarTaskSchedule] { tasks.compactMap { CalendarTaskSchedule(task: $0) } }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 15)) { timeline in
             VStack(alignment: .leading, spacing: 20) {
-                PageHeading(title: "Calendar", subtitle: "Your plans, one day at a time.")
+                HStack(alignment: .top, spacing: 16) {
+                    PageHeading(title: "Calendar", subtitle: "Your plans, one day at a time.")
+                    Spacer(minLength: 8)
+                    Button { importPresented = true } label: {
+                        Label("Import calendar", systemImage: "calendar.badge.plus")
+                    }
+                    .buttonStyle(QuietButtonStyle())
+                }
                 if showsNotificationNotice && runtime.permission != .allowed && runtime.permission != .unknown {
                     NotificationNotice()
                 }
@@ -45,6 +54,13 @@ struct TaskCalendarView: View {
         .foregroundStyle(TaskStyle.text).background(TaskStyle.content).tint(TaskStyle.coral)
         .sheet(item: $creationRequest) { request in
             CalendarTaskCreationView(day: request.day)
+        }
+        .sheet(isPresented: $importPresented) {
+            if let container = runtime.container {
+                CalendarImportView()
+                    .environment(runtime)
+                    .modelContainer(container)
+            }
         }
     }
 

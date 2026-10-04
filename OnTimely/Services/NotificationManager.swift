@@ -58,7 +58,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         return await permission()
     }
 
-    func synchronize(events: [ReminderEvent], stillValid: (NotificationPayload) -> Bool) async throws {
+    func synchronize(events: [ReminderEvent], stillValid: @MainActor @Sendable (NotificationPayload) -> Bool) async throws {
         let desired = Set(events.map(\.id))
         let pending = await center.pendingNotificationRequests()
         let existing = Set(pending.map(\.identifier))
@@ -95,7 +95,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    func removeObsoleteDelivered(valid: (NotificationPayload) -> Bool) async {
+    func removeObsoleteDelivered(valid: @MainActor @Sendable (NotificationPayload) -> Bool) async {
         let delivered = await center.deliveredNotifications()
         let obsolete = delivered.filter { notification in
             guard let payload = NotificationPayload(content: notification.request.content) else { return true }

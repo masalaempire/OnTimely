@@ -43,9 +43,9 @@ enum TaskFormatting {
         switch task.attention(at: now) {
         case .overdue: return "Past due by \(duration(task.dueDate!.timeIntervalSince(now))) · Finish and submit"
         case .submission: return "Due in \(duration(task.dueDate!.timeIntervalSince(now))) · Finish and submit"
-        case .mustStart: return "Latest safe start reached · Confirm you’re working"
+        case .mustStart: return "Latest start reached · Confirm you’re working"
         case .shouldStart:
-            return "You should start now · Latest safe start in \(duration(task.latestSafeStartDate!.timeIntervalSince(now)))"
+            return "You should start now · Latest start in \(duration(task.latestSafeStartDate!.timeIntervalSince(now)))"
         case .working: return task.hasConfirmedLatestStart ? "Working · Latest start confirmed" : "Working · We’ll check again at latest start"
         case .later: return "Start around \(task.suggestedStartDate.map(date) ?? "later")"
         case .inactive: return ""

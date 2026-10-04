@@ -50,7 +50,8 @@ final class TaskStore {
     }
 
     func activate(_ task: TaskItem, plan: TaskPlan, now: Date = .now) throws {
-        if let error = plan.validationMessage(at: now) { throw TaskStoreError.invalidPlan(error) }
+        let editingOverdueImport = task.isCalendarTask && task.status == .active && task.dueDate == plan.dueDate
+        if let error = plan.validationMessage(at: now, allowOverdue: editingOverdueImport) { throw TaskStoreError.invalidPlan(error) }
         let scheduleChanged = task.status != .active || task.dueDate != plan.dueDate
             || task.estimatedDuration != TimeInterval(plan.estimatedMinutes) * 60
             || task.safetyBuffer != TimeInterval(plan.safetyBufferMinutes) * 60
@@ -58,6 +59,10 @@ final class TaskStore {
             || task.latestSafeStartOverride != plan.latestSafeStartOverride
             || task.submissionReminderLeadTime != TimeInterval(plan.submissionLeadMinutes) * 60
             || task.reminderInterval != TimeInterval(plan.reminderIntervalMinutes) * 60
+        if task.isCalendarTask {
+            if scheduleChanged { task.calendarReminderOverrides = true }
+            task.calendarDeadlineOverridden = plan.dueDate != task.calendarSourceDueDate
+        }
         task.title = plan.title.trimmingCharacters(in: .whitespacesAndNewlines)
         task.dueDate = plan.dueDate
         task.estimatedDuration = TimeInterval(plan.estimatedMinutes) * 60
@@ -127,7 +132,115 @@ final class TaskStore {
     }
 
     func delete(_ task: TaskItem) throws {
+        if let fingerprint = task.calendarFeedFingerprint, let eventID = task.calendarEventID,
+           let subscription = try calendarSubscriptions().first(where: { $0.feedFingerprint == fingerprint }),
+           !subscription.dismissedEventIDs.contains(eventID) {
+            subscription.dismissedEventIDs.append(eventID)
+        }
         context.delete(task)
+        try save()
+    }
+
+    func calendarSubscriptions() throws -> [CalendarSubscription] {
+        try context.fetch(FetchDescriptor<CalendarSubscription>(sortBy: [SortDescriptor(\CalendarSubscription.createdAt)]))
+    }
+
+    /// Subscription changes and imported tasks are committed together before any notifications are scheduled.
+    func importCalendar(_ feed: ImportedCalendarFeed, subscription: CalendarSubscription,
+                        isNewSubscription: Bool = false, selectedEventIDs: Set<String>? = nil,
+                        submissionLeadMinutes: Int = 30, reminderIntervalMinutes: Int = 10,
+                        now: Date = .now) throws -> CalendarImportResult {
+        if isNewSubscription { context.insert(subscription) }
+        let zone = TimeZone(identifier: subscription.timeZoneIdentifier) ?? .current
+        var existing: [String: TaskItem] = [:]
+        for task in try allTasks() where task.calendarFeedFingerprint == subscription.feedFingerprint {
+            if let id = task.calendarEventID { existing[id] = task }
+        }
+        if let selectedEventIDs {
+            let omitted = feed.events.filter {
+                !$0.isCancelled && ($0.dueDate ?? .distantPast) > now && !selectedEventIDs.contains($0.id)
+            }.map(\.id)
+            subscription.dismissedEventIDs = Array(Set(subscription.dismissedEventIDs).union(omitted)).sorted()
+        }
+        let dismissed = Set(subscription.dismissedEventIDs)
+        var result = CalendarImportResult()
+        for event in feed.events {
+            if let task = existing[event.id] {
+                if event.isCancelled {
+                    if !task.calendarIsCancelled {
+                        task.calendarIsCancelled = true
+                        if task.status == .active { task.status = .inbox; task.activatedAt = nil }
+                        task.reminderRevision = UUID()
+                        clearSnooze(task)
+                        result.updated += 1
+                    }
+                    continue
+                }
+                guard let due = event.dueDate else { continue }
+                let deadlineChanged = task.calendarSourceDueDate != due
+                let titleChanged = task.calendarSourceTitle != event.title
+                let restored = task.calendarIsCancelled
+                if titleChanged && task.title == task.calendarSourceTitle { task.title = event.title }
+                task.calendarSourceTitle = event.title
+                task.calendarSourceDueDate = due
+                task.calendarIsCancelled = false
+                if deadlineChanged {
+                    if !task.calendarDeadlineOverridden { task.dueDate = due }
+                    if !task.calendarReminderOverrides, let actualDue = task.dueDate {
+                        let times = CalendarReminderRules.times(dueDate: actualDue, timeZone: zone)
+                        task.suggestedStartDate = times.suggestedStart
+                        task.latestSafeStartOverride = times.latestStart
+                    }
+                    // Completed and Inbox tasks retain their status on every refresh.
+                    if task.status == .active {
+                        task.activatedAt = now.addingTimeInterval(2)
+                        task.hasConfirmedWorking = false
+                        task.hasConfirmedLatestStart = false
+                        clearSnooze(task)
+                    }
+                }
+                if deadlineChanged || titleChanged || restored {
+                    task.reminderRevision = UUID()
+                    result.updated += 1
+                }
+            } else {
+                guard !event.isCancelled, let due = event.dueDate else { continue }
+                guard due > now else { result.skippedPastDue += 1; continue }
+                guard !dismissed.contains(event.id), selectedEventIDs?.contains(event.id) != false else { continue }
+                let times = CalendarReminderRules.times(dueDate: due, timeZone: zone)
+                let task = TaskItem(title: event.title, createdAt: now)
+                task.calendarFeedFingerprint = subscription.feedFingerprint
+                task.calendarEventID = event.id
+                task.calendarSourceTitle = event.title
+                task.calendarSourceDueDate = due
+                task.dueDate = due
+                task.suggestedStartDate = times.suggestedStart
+                task.latestSafeStartOverride = times.latestStart
+                // The event's display duration is never used as an estimate.
+                task.safetyBuffer = 0
+                task.submissionReminderLeadTime = TimeInterval(submissionLeadMinutes) * 60
+                task.reminderInterval = TimeInterval(reminderIntervalMinutes) * 60
+                task.status = .active
+                task.activatedAt = now.addingTimeInterval(2)
+                context.insert(task)
+                existing[event.id] = task
+                result.added += 1
+            }
+        }
+        subscription.lastSyncedAt = now
+        subscription.lastSyncError = nil
+        try save()
+        return result
+    }
+
+    func recordCalendarError(_ subscription: CalendarSubscription, message: String) throws {
+        subscription.lastSyncError = message
+        try save()
+    }
+
+    func disconnectCalendar(_ subscription: CalendarSubscription) throws {
+        // Keep imported tasks and their plans when the subscription is disconnected.
+        context.delete(subscription)
         try save()
     }
 

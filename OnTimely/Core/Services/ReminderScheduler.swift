@@ -16,7 +16,7 @@ struct ReminderEvent: Identifiable, Equatable, Sendable {
     var body: String {
         switch phase {
         case .suggestedStart: return "You should start working on this."
-        case .latestStart: return "Latest safe start reached. Are you working on this?"
+        case .latestStart: return "Latest start reached. Are you working on this?"
         case .submission:
             let minutes = Int(ceil(dueDate.timeIntervalSince(fireDate) / 60))
             if minutes > 0 { return "Due in \(minutes) \(minutes == 1 ? "minute" : "minutes"). Remember to finish and submit it." }
@@ -56,6 +56,8 @@ enum ReminderScheduler {
 
         func append(_ phase: ReminderPhase, at date: Date, milestone: Bool) {
             guard date > now, !task.isConfirmed(phase) else { return }
+            // A moved deadline can leave a preserved personal start override too late.
+            if phase != .submission && date >= due { return }
             // A snooze is scoped to its phase. A later phase always breaks through.
             if task.snoozedPhase == phase, let until = task.snoozedUntil, date < until { return }
             events.append(ReminderEvent(taskID: task.id, revision: task.revision, title: task.title,

@@ -47,6 +47,7 @@ private struct InboxTaskRow: View {
     let task: TaskItem
     let onPlan: (TaskItem) -> Void
     let onRename: (TaskItem) -> Void
+    @State private var confirmingDelete = false
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -62,11 +63,12 @@ private struct InboxTaskRow: View {
             Button("Plan") { onPlan(task) }
             actions
         }
+        .confirmTaskDeletion(task, isPresented: $confirmingDelete)
     }
 
     @ViewBuilder private var actions: some View {
         Button("Rename") { onRename(task) }
         Divider()
-        Button("Delete", role: .destructive) { runtime.perform { try $0.delete(task) } }
+        Button("Delete", role: .destructive) { confirmingDelete = true }
     }
 }
