@@ -64,6 +64,7 @@ struct PlannedTaskDetails: View {
     let onPlan: (TaskItem) -> Void
     let onRename: (TaskItem) -> Void
     @State private var detailsExpanded = false
+    @State private var confirmingDelete = false
     private var snapshot: TaskSnapshot { task.snapshot }
     private var phase: ReminderPhase? { snapshot.phase(at: now) }
 
@@ -100,6 +101,13 @@ struct PlannedTaskDetails: View {
                 VStack(alignment: .leading, spacing: 4) { conciseDates }
             }
             .font(TaskStyle.metadata)
+            if task.calendarPlanNeedsReview {
+                Label("The deadline changed. Review your start times.", systemImage: "exclamationmark.circle")
+                    .font(TaskStyle.metadata).foregroundStyle(TaskStyle.coral)
+            }
+            if task.calendarIsCancelled {
+                Text("Cancelled in ManageBac").font(TaskStyle.metadata).foregroundStyle(.secondary)
+            }
             if task.status == .active {
                 ViewThatFits(in: .horizontal) {
                     HStack(spacing: 8) { taskActions }
@@ -113,13 +121,15 @@ struct PlannedTaskDetails: View {
             DisclosureGroup("Timing details", isExpanded: $detailsExpanded) {
                 VStack(alignment: .leading, spacing: 8) {
                     if let suggested = task.suggestedStartDate { TimingDetail(label: "Suggested start", value: TaskFormatting.date(suggested)) }
-                    if let latest = task.latestSafeStartDate { TimingDetail(label: "Latest safe start", value: TaskFormatting.date(latest)) }
+                    if let latest = task.latestSafeStartDate { TimingDetail(label: task.latestStartLabel, value: TaskFormatting.date(latest)) }
                     if let due = task.dueDate { TimingDetail(label: "Deadline", value: TaskFormatting.date(due)) }
-                    TimingDetail(label: "Estimated work", value: TaskFormatting.duration(task.estimatedDuration))
+                    if !task.isCalendarTask {
+                        TimingDetail(label: "Estimated work", value: TaskFormatting.duration(task.estimatedDuration))
+                    }
                     if let start = task.suggestedStartDate, let due = task.dueDate, start < due {
                         TimingDetail(label: "Planned window", value: TaskFormatting.duration(due.timeIntervalSince(start)))
                     }
-                    TimingDetail(label: "Safety buffer", value: "\(Int(task.safetyBuffer / 60)) min")
+                    if !task.isCalendarTask { TimingDetail(label: "Safety buffer", value: "\(Int(task.safetyBuffer / 60)) min") }
                     if let submission = snapshot.submissionStartDate { TimingDetail(label: "Submission reminders begin", value: TaskFormatting.date(submission)) }
                     TimingDetail(label: "Repeat reminders", value: "Every \(Int(task.reminderInterval / 60)) min")
                 }
@@ -129,6 +139,7 @@ struct PlannedTaskDetails: View {
         }
         .taskRowSurface(highlighted: runtime.highlightedTaskID == task.id)
         .contextMenu { actions }
+        .confirmTaskDeletion(task, isPresented: $confirmingDelete)
     }
 
     @ViewBuilder private var conciseDates: some View {
@@ -177,7 +188,7 @@ struct PlannedTaskDetails: View {
             runtime.perform { try $0.moveToInbox(task) }
         }
         Divider()
-        Button("Delete", role: .destructive) { runtime.perform { try $0.delete(task) } }
+        Button("Delete", role: .destructive) { confirmingDelete = true }
     }
 
     private var confirmed: Bool {

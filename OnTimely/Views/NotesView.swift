@@ -55,7 +55,7 @@ struct NotesView: View {
             runtime.newNoteRequest = nil
             createNote()
         }
-        .alert("Delete note?", isPresented: Binding(
+        .alert("Are you sure?", isPresented: Binding(
             get: { deletingNote != nil },
             set: { if !$0 { deletingNote = nil } }
         ), presenting: deletingNote) { note in
