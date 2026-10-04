@@ -3,6 +3,15 @@
     <channel>
         <title>OnTimely</title>
         <item>
+            <title>0.2.1</title>
+            <pubDate>Sun, 04 Oct 2026 23:25:57 +0800</pubDate>
+            <sparkle:version>5</sparkle:version>
+            <sparkle:shortVersionString>0.2.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <enclosure url="https://github.com/masalaempire/OnTimely/releases/download/v0.2.1/OnTimely.dmg" length="9944421" type="application/octet-stream" sparkle:edSignature="MvmE+hLmxT8StVamqfrcyG4Yp2jbRe8HH6qHpFXL755UqxDSxtfF5pWkbJz1mGUA7GbyOPWTvVkHyFdDocL/Dg=="/>
+        </item>
+        <item>
             <title>0.2.0</title>
             <pubDate>Sun, 04 Oct 2026 18:58:08 +0800</pubDate>
             <sparkle:version>4</sparkle:version>
