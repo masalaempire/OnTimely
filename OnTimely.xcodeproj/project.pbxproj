@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-        A01100000000000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A01100000000000000000002 /* Sparkle */; };
+		A01100000000000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A01100000000000000000002 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-                A01100000000000000000001 /* Sparkle in Frameworks */,
+				A01100000000000000000001 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = OnTimely;
 			packageProductDependencies = (
-                A01100000000000000000002 /* Sparkle */,
+				A01100000000000000000002 /* Sparkle */,
 			);
 			productName = OnTimely;
 			productReference = 8695C8E9306FB82F00386433 /* OnTimely.app */;
@@ -100,9 +100,9 @@
 			);
 			mainGroup = 8695C8E0306FB82F00386433;
 			minimizedProjectReferenceProxies = 1;
-            packageReferences = (
-                A01100000000000000000003 /* Sparkle */,
-            );
+			packageReferences = (
+				A01100000000000000000003 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8695C8EA306FB82F00386433 /* Products */;
 			projectDirPath = "";
@@ -258,15 +258,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Configuration/OnTimely.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-                CODE_SIGN_IDENTITY = "-";
-                CODE_SIGN_ENTITLEMENTS = Configuration/OnTimely.entitlements;
-                ENABLE_LIBRARY_VALIDATION = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_LIBRARY_VALIDATION = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -276,7 +276,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.1;
+				MARKETING_VERSION = 0.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = one.simonlm.OnTimely;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -292,16 +292,16 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Configuration/OnTimely.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Manual;
-                CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
-                CODE_SIGN_IDENTITY = "-";
-                CODE_SIGN_ENTITLEMENTS = Configuration/OnTimely.entitlements;
-                ENABLE_LIBRARY_VALIDATION = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_LIBRARY_VALIDATION = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -311,7 +311,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.1;
+				MARKETING_VERSION = 0.1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = one.simonlm.OnTimely;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -324,22 +324,6 @@
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-        A01100000000000000000003 /* Sparkle */ = {
-            isa = XCRemoteSwiftPackageReference;
-            repositoryURL = "https://github.com/sparkle-project/Sparkle";
-            requirement = {kind = exactVersion; version = 2.10.0; };
-        };
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-        A01100000000000000000002 /* Sparkle */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = A01100000000000000000003 /* Sparkle */;
-            productName = Sparkle;
-        };
-/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCConfigurationList section */
 		8695C8E4306FB82F00386433 /* Build configuration list for PBXProject "OnTimely" */ = {
@@ -361,6 +345,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A01100000000000000000003 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = exactVersion;
+				version = 2.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A01100000000000000000002 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A01100000000000000000003 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 8695C8E1306FB82F00386433 /* Project object */;
 }
