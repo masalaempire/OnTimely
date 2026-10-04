@@ -29,7 +29,7 @@ struct ActiveView: View {
                                         }
                                         .padding(.horizontal, 8)
                                         ForEach(grouped) { task in
-                                            ActiveTaskRow(task: task, now: timeline.date, onPlan: onPlan, onRename: onRename)
+                                            PlannedTaskDetails(task: task, now: timeline.date, onPlan: onPlan, onRename: onRename)
                                                 .id(task.id)
                                             TaskSeparator()
                                         }
@@ -56,7 +56,8 @@ struct ActiveView: View {
     }
 }
 
-private struct ActiveTaskRow: View {
+/// Shared by Active and Calendar so both surfaces use the same reminder actions.
+struct PlannedTaskDetails: View {
     @Environment(AppRuntime.self) private var runtime
     let task: TaskItem
     let now: Date
@@ -66,18 +67,32 @@ private struct ActiveTaskRow: View {
     private var snapshot: TaskSnapshot { task.snapshot }
     private var phase: ReminderPhase? { snapshot.phase(at: now) }
 
+    init(task: TaskItem, now: Date, onPlan: @escaping (TaskItem) -> Void,
+         onRename: @escaping (TaskItem) -> Void, initiallyExpanded: Bool = false) {
+        self.task = task
+        self.now = now
+        self.onPlan = onPlan
+        self.onRename = onRename
+        _detailsExpanded = State(initialValue: initiallyExpanded)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Button { onPlan(task) } label: {
+                if task.status == .active {
+                    Button { onPlan(task) } label: {
+                        Text(task.title).font(TaskStyle.title).fontWeight(.medium)
+                            .multilineTextAlignment(.leading).lineLimit(detailsExpanded ? nil : 2)
+                    }
+                    .buttonStyle(.plain).accessibilityLabel("Review plan for \(task.title)")
+                } else {
                     Text(task.title).font(TaskStyle.title).fontWeight(.medium)
-                        .multilineTextAlignment(.leading).lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
                 }
-                .buttonStyle(.plain).accessibilityLabel("Review plan for \(task.title)")
                 Spacer(minLength: 12)
                 TaskOverflowMenu(title: task.title) { actions }
             }
-            Text(TaskFormatting.status(snapshot, now: now))
+            Text(task.status == .completed ? completedStatus : TaskFormatting.status(snapshot, now: now))
                 .font(.system(size: 13)).foregroundStyle(statusColor)
                 .fixedSize(horizontal: false, vertical: true)
             ViewThatFits(in: .horizontal) {
@@ -85,9 +100,11 @@ private struct ActiveTaskRow: View {
                 VStack(alignment: .leading, spacing: 4) { conciseDates }
             }
             .font(TaskStyle.metadata)
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 8) { taskActions }
-                VStack(alignment: .leading, spacing: 8) { taskActions }
+            if task.status == .active {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { taskActions }
+                    VStack(alignment: .leading, spacing: 8) { taskActions }
+                }
             }
             if snapshot.isSnoozed(at: now), let until = task.snoozedUntil {
                 Label("Snoozed until \(TaskFormatting.date(until))", systemImage: "bell.slash")
@@ -99,6 +116,9 @@ private struct ActiveTaskRow: View {
                     if let latest = task.latestSafeStartDate { TimingDetail(label: "Latest safe start", value: TaskFormatting.date(latest)) }
                     if let due = task.dueDate { TimingDetail(label: "Deadline", value: TaskFormatting.date(due)) }
                     TimingDetail(label: "Estimated work", value: TaskFormatting.duration(task.estimatedDuration))
+                    if let start = task.suggestedStartDate, let due = task.dueDate, start < due {
+                        TimingDetail(label: "Planned window", value: TaskFormatting.duration(due.timeIntervalSince(start)))
+                    }
                     TimingDetail(label: "Safety buffer", value: "\(Int(task.safetyBuffer / 60)) min")
                     if let submission = snapshot.submissionStartDate { TimingDetail(label: "Submission reminders begin", value: TaskFormatting.date(submission)) }
                     TimingDetail(label: "Repeat reminders", value: "Every \(Int(task.reminderInterval / 60)) min")
@@ -151,9 +171,11 @@ private struct ActiveTaskRow: View {
     }
 
     @ViewBuilder private var actions: some View {
-        Button("Edit plan") { onPlan(task) }
+        if task.status == .active { Button("Edit plan") { onPlan(task) } }
         Button("Rename") { onRename(task) }
-        Button("Move to Inbox") { runtime.perform { try $0.moveToInbox(task) } }
+        Button(task.status == .completed ? "Reopen in Inbox" : "Move to Inbox") {
+            runtime.perform { try $0.moveToInbox(task) }
+        }
         Divider()
         Button("Delete", role: .destructive) { runtime.perform { try $0.delete(task) } }
     }
@@ -161,6 +183,10 @@ private struct ActiveTaskRow: View {
     private var confirmed: Bool {
         if let phase { return snapshot.isConfirmed(phase) }
         return task.hasConfirmedWorking
+    }
+
+    private var completedStatus: String {
+        task.completedAt.map { "Completed \(TaskFormatting.date($0))" } ?? "Completed"
     }
 
     private var statusColor: Color {

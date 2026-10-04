@@ -4,12 +4,14 @@ import Observation
 import SwiftData
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case inbox = "Inbox", active = "Active", done = "Done"
+    case inbox = "Inbox", active = "Active", calendar = "Calendar", notes = "Notes", done = "Done"
     var id: String { rawValue }
     var symbol: String {
         switch self {
         case .inbox: "tray"
         case .active: "clock"
+        case .calendar: "calendar"
+        case .notes: "note.text"
         case .done: "checkmark"
         }
     }
@@ -35,6 +37,7 @@ enum ReminderDefaults {
 final class AppRuntime {
     let container: ModelContainer?
     let store: TaskStore?
+    let noteStore: NoteStore?
     let startupError: String?
     let notifications: NotificationManager
     var section: AppSection = .inbox
@@ -42,6 +45,7 @@ final class AppRuntime {
     var errorMessage: String?
     var highlightedTaskID: UUID?
     var isEnablingNotifications = false
+    var newNoteRequest: UUID?
 
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
@@ -53,13 +57,15 @@ final class AppRuntime {
 
     init() {
         do {
-            let container = try ModelContainer(for: TaskItem.self)
+            let container = try ModelContainer(for: TaskItem.self, NoteItem.self)
             self.container = container
             store = TaskStore(context: container.mainContext)
+            noteStore = NoteStore(context: container.mainContext)
             startupError = nil
         } catch {
             container = nil
             store = nil
+            noteStore = nil
             startupError = error.localizedDescription
         }
         notifications = NotificationManager()
@@ -141,7 +147,7 @@ final class AppRuntime {
 
     func activate(_ task: TaskItem, plan: TaskPlan) -> Bool {
         guard perform({ try $0.activate(task, plan: plan) }) else { return false }
-        section = .active
+        if section != .calendar { section = .active }
         Task {
             if await notifications.permission() == .notRequested { await enableNotifications() }
             else { await refresh() }
@@ -153,6 +159,12 @@ final class AppRuntime {
         section = .inbox
         highlightedTaskID = nil
         NotificationCenter.default.post(name: .focusQuickAdd, object: nil)
+    }
+
+    func focusNewNote() {
+        section = .notes
+        newNoteRequest = UUID()
+        NotificationCenter.default.post(name: .showMainWindow, object: nil)
     }
 
     func openNotificationSettings() {

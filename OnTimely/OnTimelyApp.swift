@@ -21,7 +21,7 @@ struct OnTimelyApp: App {
                     .modelContainer(container)
             } else {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("OnTimely couldn’t open your tasks.").font(.title2)
+                    Text("OnTimely couldn’t open your saved data.").font(.title2)
                     Text(runtime.startupError ?? "Try opening the app again.").foregroundStyle(.secondary)
                     Text("Your saved data has been kept. Quit and reopen the app to try again.")
                 }
@@ -36,13 +36,18 @@ struct OnTimelyApp: App {
             AboutCommands()
             CommandGroup(after: .appInfo) { CheckForUpdatesButton(updates: updates) }
             CommandGroup(replacing: .newItem) {
-                Button("Add Task") { runtime.focusQuickAdd() }
+                Button(runtime.section == .notes ? "New Note" : "Add Task") {
+                    if runtime.section == .notes { runtime.focusNewNote() }
+                    else { runtime.focusQuickAdd() }
+                }
                     .keyboardShortcut("n")
             }
             CommandMenu("Tasks") {
                 Button("Inbox") { runtime.section = .inbox }.keyboardShortcut("1")
                 Button("Active") { runtime.section = .active }.keyboardShortcut("2")
                 Button("Done") { runtime.section = .done }.keyboardShortcut("3")
+                Button("Calendar") { runtime.section = .calendar }.keyboardShortcut("4")
+                Button("Notes") { runtime.section = .notes }.keyboardShortcut("5")
             }
         }
         Window("About OnTimely", id: AboutView.windowID) {

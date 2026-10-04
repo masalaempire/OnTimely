@@ -6,6 +6,7 @@ struct MainView: View {
     @Environment(AppRuntime.self) private var runtime
     @Environment(\.openWindow) private var openWindow
     @Query(sort: \TaskItem.createdAt) private var tasks: [TaskItem]
+    @Query private var notes: [NoteItem]
     @State private var planningTask: TaskItem?
     @State private var renamingTask: TaskItem?
     @State private var composerVisible = false
@@ -19,7 +20,7 @@ struct MainView: View {
                 VStack(spacing: 4) {
                     ForEach(AppSection.allCases) { section in
                         SidebarSectionButton(section: section,
-                                             count: tasks.filter { matches($0, section: section) }.count,
+                                             count: count(in: section),
                                              selected: runtime.section == section) {
                             runtime.section = section
                         }
@@ -47,6 +48,11 @@ struct MainView: View {
             case .active:
                 ActiveView(tasks: tasks.filter { $0.status == .active },
                            onPlan: { planningTask = $0 }, onRename: { renamingTask = $0 })
+            case .calendar:
+                TaskCalendarView(tasks: tasks,
+                                 onPlan: { planningTask = $0 }, onRename: { renamingTask = $0 })
+            case .notes:
+                NotesView()
             case .done:
                 DoneView(tasks: tasks.filter { $0.status == .completed }, onRename: { renamingTask = $0 })
             }
@@ -72,11 +78,13 @@ struct MainView: View {
         .task { runtime.start() }
     }
 
-    private func matches(_ task: TaskItem, section: AppSection) -> Bool {
+    private func count(in section: AppSection) -> Int {
         switch section {
-        case .inbox: task.status == .inbox
-        case .active: task.status == .active
-        case .done: task.status == .completed
+        case .inbox: tasks.filter { $0.status == .inbox }.count
+        case .active: tasks.filter { $0.status == .active }.count
+        case .calendar: tasks.filter { CalendarTaskSchedule(task: $0) != nil }.count
+        case .notes: notes.count
+        case .done: tasks.filter { $0.status == .completed }.count
         }
     }
 }
@@ -104,7 +112,7 @@ private struct SidebarSectionButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain).onHover { hovering = $0 }
-        .accessibilityLabel("\(section.rawValue), \(count) tasks")
+        .accessibilityLabel("\(section.rawValue), \(count) \(section == .notes ? "notes" : "tasks")")
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 }

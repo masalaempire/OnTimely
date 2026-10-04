@@ -14,9 +14,9 @@ struct TaskPlanningView: View {
     @State private var saveError: String?
     @FocusState private var titleFocused: Bool
 
-    init(task: TaskItem) {
+    init(task: TaskItem, dueDay: Date? = nil) {
         self.task = task
-        let draft = PlanningDraft(task: task)
+        let draft = PlanningDraft(task: task, dueDay: dueDay)
         _draft = State(initialValue: draft)
         _screen = State(initialValue: task.status == .active ? .review : .due)
         _customDuration = State(initialValue: ![15, 30, 60, 120].contains(MinuteText.value(draft.estimatedText) ?? 0))

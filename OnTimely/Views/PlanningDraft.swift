@@ -32,9 +32,10 @@ struct PlanningDraft {
     var overridesLatest: Bool
     var overrideDate: Date
 
-    init(task: TaskItem, now: Date = .now) {
+    init(task: TaskItem, dueDay: Date? = nil, now: Date = .now) {
         let hasSavedPlan = task.dueDate != nil
-        let due = task.dueDate ?? now.addingTimeInterval(4 * 60 * 60)
+        let due = task.dueDate ?? dueDay.map { Self.initialDeadline(on: $0, now: now) }
+            ?? now.addingTimeInterval(4 * 60 * 60)
         let estimate = hasSavedPlan ? Int(task.estimatedDuration / 60) : 60
         let buffer = hasSavedPlan ? Int(task.safetyBuffer / 60) : ReminderDefaults.bufferMinutes
         let calculated = DeadlineCalculator.latestSafeStart(dueDate: due,
@@ -53,6 +54,17 @@ struct PlanningDraft {
         chosenStartDate = task.suggestedStartDate ?? min(now, latest)
         overridesLatest = task.latestSafeStartOverride != nil
         overrideDate = latest
+    }
+
+    /// Seed a calendar-created draft without treating it as an already saved plan.
+    private static func initialDeadline(on day: Date, now: Date) -> Date {
+        let calendar = Calendar.current
+        let defaultDue = now.addingTimeInterval(4 * 60 * 60)
+        if calendar.isDate(day, inSameDayAs: now), let interval = calendar.dateInterval(of: .day, for: day) {
+            return min(defaultDue, interval.end.addingTimeInterval(-1))
+        }
+        let time = calendar.dateComponents([.hour, .minute], from: defaultDue)
+        return calendar.date(bySettingHour: time.hour ?? 18, minute: time.minute ?? 0, second: 0, of: day) ?? day
     }
 
     var durationError: String? {
