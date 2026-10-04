@@ -33,6 +33,7 @@ struct OnTimelyApp: App {
         .defaultSize(width: 1000, height: 680)
         .windowResizability(.contentMinSize)
         .commands {
+            AboutCommands()
             CommandGroup(after: .appInfo) { CheckForUpdatesButton(updates: updates) }
             CommandGroup(replacing: .newItem) {
                 Button("Add Task") { runtime.focusQuickAdd() }
@@ -44,6 +45,12 @@ struct OnTimelyApp: App {
                 Button("Done") { runtime.section = .done }.keyboardShortcut("3")
             }
         }
+        Window("About OnTimely", id: AboutView.windowID) {
+            AboutView()
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
         Settings {
             SettingsView(updates: updates).environment(runtime).tint(TaskStyle.coral)
         }
