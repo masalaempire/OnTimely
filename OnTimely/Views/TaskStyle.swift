@@ -10,6 +10,8 @@ enum TaskStyle {
     static let selection = adaptive(light: 0xFCEBE5, dark: 0x472923)
     static let hover = adaptive(light: 0xF5F2EE, dark: 0x302C28)
     static let separator = adaptive(light: 0xE9E4DE, dark: 0x413B35, highLight: 0x8A8178, highDark: 0x9B9187)
+    static let calendarPlanned = adaptive(light: 0x54759A, dark: 0x99B8DA, highLight: 0x31547B, highDark: 0xC0DAF8)
+    static let calendarWorking = adaptive(light: 0x39745B, dark: 0x8EC5A7, highLight: 0x22573F, highDark: 0xBAE7CE)
     static let heading = Font.system(size: 28, weight: .semibold)
     static let title = Font.system(size: 15)
     static let metadata = Font.system(size: 12)
