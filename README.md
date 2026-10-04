@@ -18,7 +18,7 @@ Keep OnTimely running for reminders. You can close its window and leave the app 
 
 ## Importing ManageBac tasks
 
-Open **Calendar → Import calendar** at the top right and paste your ManageBac `webcal://` subscription link. Choose your school's time zone, preview upcoming assignments, and import them. Past-due assignments are skipped. ManageBac task deadlines use the event's start time; the later end of its calendar display block is ignored. Other calendar feeds use their timed event's end, and to-do feeds use their explicit due time. All-day events and recurring series are excluded.
+Open a ManageBac `webcal://` link and choose **OnTimely** to open the import screen with the link filled in. You can also open **Calendar → Import calendar** at the top right and paste a subscription link. Choose your school's time zone, preview upcoming assignments, and import them. Past-due assignments are skipped. ManageBac task deadlines use the event's start time; the later end of its calendar display block is ignored. Other calendar feeds use their timed event's end, and to-do feeds use their explicit due time. All-day events and recurring series are excluded.
 
 Imported assignments activate reminders automatically. Deadlines at or before **4:20 p.m.** get a suggested start at **7 p.m. the previous day** and latest start at **10 p.m.** Later deadlines get **6:50 p.m.** and **9 p.m.** on their due day. If those times would reach or pass the deadline, reminders use **2 hours before** and **1 hour before** instead. Submission reminders use your existing preferences.
 

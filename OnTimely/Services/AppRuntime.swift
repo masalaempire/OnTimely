@@ -32,6 +32,11 @@ enum ReminderDefaults {
     }
 }
 
+struct CalendarImportRequest: Identifiable {
+    let id = UUID()
+    let link: String
+}
+
 @MainActor
 @Observable
 final class AppRuntime {
@@ -47,7 +52,9 @@ final class AppRuntime {
     var highlightedTaskID: UUID?
     var isEnablingNotifications = false
     var newNoteRequest: UUID?
+    var calendarImportRequests: [CalendarImportRequest] = []
 
+    @ObservationIgnored var openMainWindow: (@MainActor () -> Void)?
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var calendarTimer: Timer?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
@@ -185,6 +192,21 @@ final class AppRuntime {
         NotificationCenter.default.post(name: .showMainWindow, object: nil)
     }
 
+    func requestCalendarImport(link: String = "") {
+        if !calendarImportRequests.contains(where: { $0.link == link }) {
+            calendarImportRequests.append(CalendarImportRequest(link: link))
+        }
+        section = .calendar
+        openMainWindow?()
+        NotificationCenter.default.post(name: .showMainWindow, object: nil)
+        NSApplication.shared.activate(ignoringOtherApps: true)
+    }
+
+    func openCalendarURL(_ url: URL) {
+        guard url.scheme?.lowercased() == "webcal" else { return }
+        requestCalendarImport(link: url.absoluteString)
+    }
+
     func openNotificationSettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension") {
             NSWorkspace.shared.open(url)
@@ -232,6 +254,11 @@ extension Notification.Name {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static var runtime: AppRuntime?
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        // Keep links in memory until the user previews and confirms the subscription.
+        for url in urls { Self.runtime?.openCalendarURL(url) }
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if let iconURL = Bundle.main.url(forResource: "OnTimely", withExtension: "icns"),

@@ -1,27 +1,73 @@
+import AppKit
 import SwiftUI
+
+private enum LaunchSheet: Identifiable {
+    case setup
+    case calendarImport(CalendarImportRequest)
+
+    var id: String {
+        switch self {
+        case .setup: "setup"
+        case .calendarImport(let request): request.id.uuidString
+        }
+    }
+}
 
 struct AppLaunchView: View {
     @ObservedObject var updates: AppUpdater
+    @Environment(AppRuntime.self) private var runtime
+    @Environment(\.openWindow) private var openWindow
     @AppStorage("hasShownSetupHelper") private var hasShownSetup = false
-    @State private var showingSetup = false
+    @State private var presentedSheet: LaunchSheet?
     @State private var prepared = false
 
     var body: some View {
         MainView()
-            .sheet(isPresented: $showingSetup, onDismiss: { updates.start() }) {
-                SetupHelperView(updates: updates)
+            .sheet(item: $presentedSheet, onDismiss: sheetDismissed) { sheet in
+                switch sheet {
+                case .setup: SetupHelperView(updates: updates)
+                case .calendarImport(let request): CalendarImportView(initialLink: request.link)
+                }
             }
             .task {
+                let openWindow = openWindow
+                // Retain the scene action so a link can reopen a closed main window.
+                runtime.openMainWindow = { openWindow(id: "main") }
                 guard !prepared else { return }
                 prepared = true
                 if hasShownSetup {
                     updates.start()
+                    presentNextCalendarImport()
                 } else {
                     // Keep this independent of the version, even if the user quits during setup.
                     hasShownSetup = true
-                    showingSetup = true
+                    presentedSheet = .setup
                 }
             }
+            .onChange(of: runtime.calendarImportRequests.count) { _, _ in presentNextCalendarImport() }
+            .onReceive(NotificationCenter.default.publisher(for: NSWindow.didEndSheetNotification)) { _ in
+                // A link received while another task sheet is open waits until that sheet closes.
+                Task { @MainActor in
+                    await Task.yield()
+                    presentNextCalendarImport()
+                }
+            }
+    }
+
+    private func sheetDismissed() {
+        updates.start()
+        Task { @MainActor in
+            await Task.yield()
+            presentNextCalendarImport()
+        }
+    }
+
+    private func presentNextCalendarImport() {
+        guard prepared, presentedSheet == nil, !runtime.calendarImportRequests.isEmpty,
+              !NSApplication.shared.windows.contains(where: { $0.attachedSheet != nil }) else { return }
+        let request = runtime.calendarImportRequests.removeFirst()
+        openWindow(id: "main")
+        presentedSheet = .calendarImport(request)
     }
 }
 

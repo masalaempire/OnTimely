@@ -14,6 +14,10 @@ struct CalendarImportView: View {
     @State private var loadingTask: Task<Void, Never>?
     @State private var disconnectingCalendar: CalendarSubscription?
 
+    init(initialLink: String = "") {
+        _link = State(initialValue: initialLink)
+    }
+
     private var busy: Bool { isLoading || runtime.calendarImports?.isRefreshing == true }
 
     var body: some View {

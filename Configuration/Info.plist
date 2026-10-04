@@ -4,6 +4,19 @@
 <dict>
 	<key>CFBundleIconFile</key>
 	<string>OnTimely.icns</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>one.simonlm.OnTimely.calendar-subscription</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>webcal</string>
+			</array>
+		</dict>
+	</array>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/masalaempire/OnTimely/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
